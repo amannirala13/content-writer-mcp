@@ -22,7 +22,7 @@ class LLMAgent(ABC):
         processed_config = self.get_default_config().copy()
         if config:
             for key, value in config.items():
-                processed_config[key] = value
+                processed_config[key] = value if value is not None else processed_config.get(key)
         return processed_config
 
     @abstractmethod

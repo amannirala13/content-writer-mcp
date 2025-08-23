@@ -9,9 +9,10 @@ class GenerateContentStructure(Tools):
     def __init__(self, mcp_server: FastMCP):
         super().__init__(mcp_server)
         self._llm_client: LLMAgent = OpenAIClient(
-            config = {"model": "gpt-4",
-                      "max_tokens": 1000,
-                      "system_behavior": '''
+            config = {"model": "gpt-5-nano",
+                      "response_format": {"type": "json_object"}
+                      },
+            system_behavior='''
                         You are an expert content strategist. Extract the main objective from the given content.
                         Provide different topics and aspects of the objective if applicable.
                         Define relevant images, charts, tables, or code snippets that could be included to enhance the content if applicable.
@@ -42,17 +43,16 @@ class GenerateContentStructure(Tools):
                         }
                         
                         Ensure the JSON is properly formatted.
-                                        '''}
+                                        '''
         )
 
     def register_tool(self) -> None:
         @self.get_mcp().tool()
-        async def generate_content_structure(topic: str, max_tokens: int = None) -> str:
+        async def generate_content_structure(topic: str) -> str:
             return await self._llm_client.generate_text_with_messages(
                 messages=[
                     OpenAIClient.user_message(
                         f"Analyze the following topic and extract its main objective along with relevant topics and subtopics:\n\n{topic}"
                     )
-                ],
-                config= {"max_tokens": max_tokens}
+                ]
             )

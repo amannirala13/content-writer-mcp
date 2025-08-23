@@ -9,20 +9,17 @@ class OpenAIClient(LLMAgent):
 
     def __init__(
             self,
+            api_key_flag: str = None,
+            system_behavior: str = None,
             config: dict = None,):
         super().__init__(config=config)
 
-        self._client = AsyncOpenAI(api_key=self.get_config()["api_key"])
-        self._model = self.get_config()["model"]
-        self._max_tokens = self.get_config()["max_tokens"]
-        self._system_behavior = OpenAIClient.system_message( self.get_config()["system_behaviour"] ) if self.get_config().get("system_behaviour") else None
+        self._client = AsyncOpenAI(api_key=os.getenv(api_key_flag if api_key_flag else "OPENAI_API_KEY"))
+        self._system_behavior = OpenAIClient.system_message( system_behavior ) if system_behavior else None
 
     def get_default_config(self) -> dict:
         return {
-            "api_key": os.getenv("OPENAI_API_KEY"),
-            "model": "gpt-3.5-turbo",
-            "max_tokens": 150,
-            "system_behavior": None
+            "model": "gpt-5-nano",
         }
 
     def define_system_behavior(self, system_behavior: str) -> None:
@@ -30,19 +27,17 @@ class OpenAIClient(LLMAgent):
 
     async def generate_text(self, prompt: str, config: dict = None) -> str:
         response = await self._client.chat.completions.create(
-            model= config["model"] if config and "model" in config else self.get_default_config().get("model"),
             messages=[{"role": "user", "content": prompt}],
-            max_tokens= config["max_tokens"] if config and "max_tokens" in config else self.get_default_config().get("max_tokens"),
+            **(config if config else self.get_config())
         )
         return response.choices[0].message.content
 
     async def generate_text_with_messages(self, messages: list, config: dict = None) -> str:
+        print("Calling with messages:", messages, " and config:", (config if config else self.get_config()))
         response = await self._client.chat.completions.create(
-            model= config["model"] if config and "model" in config else self.get_default_config().get("model"),
             messages= [self._system_behavior] + messages if self._system_behavior is not None else messages,
-            max_tokens= config["max_tokens"] if config and "max_tokens" in config else self.get_default_config().get("max_tokens"),
-        )
-        print(response)
+            **(config if config else self.get_config()))
+        print("Response:", response)
         return response.choices[0].message.content
 
     def get_client(self) -> AsyncOpenAI:
