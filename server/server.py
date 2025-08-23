@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 from fastmcp import FastMCP
@@ -9,7 +10,7 @@ from tools.tools import Tools
 
 
 class Server:
-    def __init__(self, host='localhost', port=8080, name="Content Writer"):
+    def __init__(self, host: str, port: int, name="Content Writer"):
         self._host: str = host
         self._port: int = port
         self._mcp_server: FastMCP = FastMCP(name)

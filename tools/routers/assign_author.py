@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 
-from llm.open_ai import OpenAIClient
+from llm.provider.open_ai import OpenAIClient
 from tools.tools import Tools
 
 
@@ -27,10 +27,10 @@ class AssignAuthor(Tools):
             self._llm_client.define_system_behavior(prompt)
 
             response = await self._llm_client.generate_text_with_messages(
-                model="gpt-4",
-                messages=[
-                    OpenAIClient.user_message(topic)
-                ],
-                max_tokens=50,
+                config={
+                    "model": "gpt-4",
+                    "max_tokens": 50,
+                    },
+                messages= [OpenAIClient.user_message(topic)],
             )
             return response
