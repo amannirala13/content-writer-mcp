@@ -1,11 +1,12 @@
 import asyncio
+import os
 
 from client.client import MyClient
 from core.config_env import config_env
 
 
-async def main():
-    my_client = MyClient("http://localhost:8080/mcp")
+async def main(host: str = None, port: int = None):
+    my_client = MyClient(f"http://{host}:{port}/mcp")
     await my_client.connect()
     tools = await my_client.list_tools()
     print(tools)
@@ -27,4 +28,4 @@ async def main():
 
 if __name__ == "__main__":
     config_env()
-    asyncio.run(main())
+    asyncio.run(main(os.getenv("HOST"), int(os.getenv("PORT"))))
