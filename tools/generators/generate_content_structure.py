@@ -1,3 +1,9 @@
+"""
+@author: amannirala13
+@date: 2025-8-23
+@description: This module defines the GenerateContentStructure tool for generating a structured content outline based on a given topic.
+             It utilizes the FastMCP framework for tool registration and the OpenAIClient for language model interactions.
+"""
 from fastmcp import FastMCP
 
 from llm.llm_agent import LLMAgent
@@ -6,7 +12,16 @@ from tools.tools import Tools
 
 
 class GenerateContentStructure(Tools):
+    """
+    A tool for generating a structured content outline based on a given topic.
+    This tool utilizes the FastMCP framework for tool registration and the OpenAIClient for language model interactions.
+    """
     def __init__(self, mcp_server: FastMCP):
+        """
+        Initialize the GenerateContentStructure tool with the MCP server and OpenAI client.
+        :param mcp_server: The FastMCP server instance.
+        :return: None
+        """
         super().__init__(mcp_server)
         self._llm_client: LLMAgent = OpenAIClient(
             config = {"model": "gpt-5-nano",
@@ -47,8 +62,17 @@ class GenerateContentStructure(Tools):
         )
 
     def register_tool(self) -> None:
+        """
+        Register the generate_content_structure tool with the MCP server.
+        :return: None
+        """
         @self.get_mcp().tool()
         async def generate_content_structure(topic: str) -> str:
+            """
+            Generate a structured content outline based on the given topic.
+            :param topic: The topic to generate the content structure for.
+            :return: A JSON string representing the structured content outline.
+            """
             return await self._llm_client.generate_text_with_messages(
                 messages=[
                     OpenAIClient.user_message(
