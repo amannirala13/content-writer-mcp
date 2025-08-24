@@ -26,6 +26,7 @@ class AssignAuthor(Tools):
         Register the assign_author tool with the MCP server.
         :return: None
         """
+
         @self.get_mcp().tool()
         async def assign_author(topic: str, authors: list) -> str:
             """
@@ -35,7 +36,7 @@ class AssignAuthor(Tools):
             :param authors: A list of authors with their expertise.
             :return: The name of the most suitable author.
             """
-            prompt = f"You are an expert in assigning topics to authors based on their expertise. Given the topic from the user, assign the most suitable author from the following list:\n"
+            prompt = "You are an expert in assigning topics to authors based on their expertise. Given the topic from the user, assign the most suitable author from the following list:\n"
             for author in authors:
                 prompt += f"- {author}\n"
             prompt += "The most suitable author is:"
@@ -44,9 +45,9 @@ class AssignAuthor(Tools):
 
             response = await self._llm_client.generate_text_with_messages(
                 config={
-                    "model": "gpt-4",
+                    "model": "gpt-4o-mini",
                     "max_tokens": 50,
-                    },
-                messages= [OpenAIClient.user_message(topic)],
+                },
+                messages=[OpenAIClient.user_message(topic)],
             )
             return response
