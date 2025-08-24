@@ -11,7 +11,7 @@ from openai import AsyncOpenAI
 from llm.llm_agent import LLMAgent
 
 
-class GraniteClient(LLMAgent):
+class LocalLMClient(LLMAgent):
     """
     A client for interacting with LM Studio's Granite model asynchronously.
     This class extends the LLMAgent abstract base class and provides implementations
@@ -43,12 +43,12 @@ class GraniteClient(LLMAgent):
 
         # LM Studio local server uses an OpenAI-compatible API but does not require authentication.
         self._client = AsyncOpenAI(
-            base_url="http://localhost:1234/v1",
+            base_url="http://127.0.0.1:1234/v1",
             api_key=os.getenv(api_key_flag) if api_key_flag else "lm-studio",
         )
 
         self._system_behavior = (
-            GraniteClient.system_message(system_behavior) if system_behavior else None
+            LocalLMClient.system_message(system_behavior) if system_behavior else None
         )
 
     def get_default_config(self) -> dict:
@@ -63,7 +63,7 @@ class GraniteClient(LLMAgent):
         """
         Define the system behavior for the model's responses.
         """
-        self._system_behavior = GraniteClient.system_message(system_behavior)
+        self._system_behavior = LocalLMClient.system_message(system_behavior)
 
     async def generate_text(self, prompt: str, config: dict = None) -> str:
         """

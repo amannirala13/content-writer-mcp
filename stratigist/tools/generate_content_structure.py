@@ -8,6 +8,7 @@ from fastmcp import FastMCP
 
 from core.utils.open_ai_schema_processor import process_openai_json_schema
 from llm.llm_agent import LLMAgent
+from llm.provider.local_lm_client import LocalLMClient
 from llm.provider.open_ai import OpenAIClient
 from models.content_structure_model import ContentStructureModel
 from tools.tools import Tools
@@ -25,7 +26,7 @@ class ContentStrategist(Tools):
         :return: None
         """
         super().__init__(mcp_server)
-        self._llm_client: LLMAgent = OpenAIClient(
+        self._llm_client: LLMAgent = LocalLMClient(
             config = {"model": "gpt-5-nano",
                       "response_format": {
                           "type": "json_schema",

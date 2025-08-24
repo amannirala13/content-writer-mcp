@@ -7,6 +7,7 @@
 
 from fastmcp import FastMCP
 
+from llm.provider.local_lm_client import LocalLMClient
 from llm.provider.open_ai import OpenAIClient
 from tools.tools import Tools
 
@@ -19,7 +20,7 @@ class AssignAuthor(Tools):
         :return: None
         """
         super().__init__(mcp_server)
-        self._llm_client = OpenAIClient()
+        self._llm_client = LocalLMClient()
 
     def register_tool(self) -> None:
         """
