@@ -6,12 +6,14 @@
 """
 from fastmcp import FastMCP
 
+from core.utils.open_ai_schema_processor import process_openai_json_schema
 from llm.llm_agent import LLMAgent
 from llm.provider.open_ai import OpenAIClient
+from models.content_structure_model import ContentStructureModel
 from tools.tools import Tools
 
 
-class GenerateContentStructure(Tools):
+class ContentStrategist(Tools):
     """
     A tool for generating a structured content outline based on a given topic.
     This tool utilizes the FastMCP framework for tool registration and the OpenAIClient for language model interactions.
@@ -25,37 +27,25 @@ class GenerateContentStructure(Tools):
         super().__init__(mcp_server)
         self._llm_client: LLMAgent = OpenAIClient(
             config = {"model": "gpt-5-nano",
-                      "response_format": {"type": "json_object"}
+                      "response_format": {
+                          "type": "json_schema",
+                          "json_schema": {
+                              "name": "ContentStructure",
+                              "schema": process_openai_json_schema(ContentStructureModel.model_json_schema()),
+                              "strict": True
+                          }
+                      }
                       },
-            system_behavior='''
+            system_behavior=f'''
                         You are an expert content strategist. Extract the main objective from the given content.
                         Provide different topics and aspects of the objective if applicable.
                         Define relevant images, charts, tables, or code snippets that could be included to enhance the content if applicable.
                         Proved a clear structure of topics and subtopics to be discussed/included if applicable.
                         Respond in a concise manner.
                         
-                        Format your response in the following JSON structure:
-                        {
-                        "title": "Main topic of the content",
-                        "objective": "The main objective of the content",
-                        "topics": [
-                            {
-                                "topic": "Topic 1",
-                                    "sub_topics": ["Sub Topic 1.1", "Sub Topic 1.2", "Sub Topic 1.3", ..., "Sub Topic 1.x"],
-                            },
-                            {
-                                "topic": "Topic 2",
-                                    "sub_topics": ["Sub Topic 2.1", "Sub Topic 2.2", "Sub Topic 2.3", ..., "Sub Topic 2.y"],
-                            },
-                            .
-                            .
-                            .
-                            {
-                                "topic": "Topic N",
-                                    "sub_topics": ["Sub Topic N.1", "Sub Topic N.2", "Sub Topic N.3", ..., "Sub Topic N.z"],
-                            },
-                            ]
-                        }
+                        Format your response in the following JSON schema:
+                        
+                        {ContentStructureModel.model_json_schema()}
                         
                         Ensure the JSON is properly formatted.
                                         '''
@@ -73,10 +63,14 @@ class GenerateContentStructure(Tools):
             :param topic: The topic to generate the content structure for.
             :return: A JSON string representing the structured content outline.
             """
-            return await self._llm_client.generate_text_with_messages(
+            response = await self._llm_client.generate_text_with_messages(
                 messages=[
                     OpenAIClient.user_message(
                         f"Analyze the following topic and extract its main objective along with relevant topics and subtopics:\n\n{topic}"
                     )
                 ]
             )
+
+            print("Raw response: ", response)
+            content_structure = ContentStructureModel.model_validate_json(response)
+            return content_structure.model_dump_json(indent=4)

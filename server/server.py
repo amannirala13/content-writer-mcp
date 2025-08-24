@@ -1,10 +1,7 @@
-import os
-from typing import List
-
 from fastmcp import FastMCP
 
-from tools.generators.generate_content_structure import GenerateContentStructure
-from tools.retrievers.arvix.research_paper_retriever import ResearchPaperRetriever
+from retriever.tools.arvix.research_paper_retriever import ResearchPaperRetriever
+from stratigist.tools.generate_content_structure import ContentStrategist
 from tools.routers.assign_author import AssignAuthor
 from tools.tools import Tools
 
@@ -23,7 +20,7 @@ class Server:
 
     def register_tools(self):
         research_paper_retriever: Tools = ResearchPaperRetriever(mcp_server= self._mcp_server)
-        content_integration_tool: Tools = GenerateContentStructure(mcp_server= self._mcp_server)
+        content_integration_tool: Tools = ContentStrategist(mcp_server= self._mcp_server)
         assign_author: Tools = AssignAuthor(mcp_server= self._mcp_server)
 
         research_paper_retriever.register_tool()
