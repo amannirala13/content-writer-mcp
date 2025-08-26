@@ -1,12 +1,11 @@
 import os
 
 from core.config_env import config_env
-from server.server import Server
+from server.mserver import MServer
 
 
 def main(host: str, port: int):
-    content_mcp_server = Server(host, port)
-    content_mcp_server.register_tools()
+    content_mcp_server = MServer(host, port)
     content_mcp_server.run()
 
 

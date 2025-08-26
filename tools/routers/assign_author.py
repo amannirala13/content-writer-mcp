@@ -6,13 +6,30 @@
 """
 
 from fastmcp import FastMCP
+from lazy_object_proxy.utils import await_
+from python_a2a import skill, agent
 
 from llm.provider.local_lm_client import LocalLMClient
 from llm.provider.open_ai import OpenAIClient
-from tools.tools import Tools
+from tools.tool import A2ATool
 
 
-class AssignAuthor(Tools):
+@agent(
+    name="AssignAuthor",
+    version="1.0.0",
+    description="A tool for assigning topics to the most suitable author based on their expertise.",
+    tags=["tool", "author", "assignment", "expertise", "topic"],
+)
+class AssignAuthor(A2ATool):
+
+    @skill(
+        name="get_capabilities_skill",
+        description="Get the capabilities of the AssignAuthor tool.",
+        tags=["tool", "capabilities", "info"],
+    )
+    async def get_capabilities_skill(self) -> dict:
+        return await self._get_capabilities()
+
     def __init__(self, mcp_server: FastMCP):
         """
         Initialize the AssignAuthor tool with the MCP server and OpenAI client.
@@ -28,7 +45,11 @@ class AssignAuthor(Tools):
         :return: None
         """
 
-        @self.get_mcp().tool()
+        @self.get_mcp().tool(
+            name=f"{self.__class__.__name__}r.assign_author",
+            title=f"{self.__class__.__name__}.assign_author",
+            description="Assign the most suitable author for a given topic based on their expertise.",
+        )
         async def assign_author(topic: str, authors: list) -> str:
             """
             Assign the most suitable author for a given topic.
@@ -52,3 +73,11 @@ class AssignAuthor(Tools):
                 messages=[OpenAIClient.user_message(topic)],
             )
             return response
+
+        @self.get_mcp().tool(
+            name=f"{self.__class__.__name__}.get_capabilities",
+            title=f"{self.__class__.__name__}.get_capabilities",
+            description="Get the capabilities of the AssignAuthor tool.",
+        )
+        async def get_capabilities() -> dict:
+            return await self._get_capabilities()
