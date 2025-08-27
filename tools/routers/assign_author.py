@@ -6,12 +6,11 @@
 """
 
 from fastmcp import FastMCP
-from lazy_object_proxy.utils import await_
 from python_a2a import skill, agent
 
 from llm.provider.local_lm_client import LocalLMClient
 from llm.provider.open_ai import OpenAIClient
-from tools.tool import A2ATool
+from core.foundation.tools import A2ATool, MCPTool
 
 
 @agent(
@@ -20,7 +19,7 @@ from tools.tool import A2ATool
     description="A tool for assigning topics to the most suitable author based on their expertise.",
     tags=["tool", "author", "assignment", "expertise", "topic"],
 )
-class AssignAuthor(A2ATool):
+class AssignAuthor(A2ATool, MCPTool):
 
     @skill(
         name="get_capabilities_skill",
@@ -36,7 +35,8 @@ class AssignAuthor(A2ATool):
         :param mcp_server: The FastMCP server instance.
         :return: None
         """
-        super().__init__(mcp_server)
+        A2ATool.__init__(self, mcp_server)
+        MCPTool.__init__(self, mcp_server)
         self._llm_client = LocalLMClient()
 
     def register_tool(self) -> None:
@@ -46,8 +46,8 @@ class AssignAuthor(A2ATool):
         """
 
         @self.get_mcp().tool(
-            name=f"{self.__class__.__name__}r.assign_author",
-            title=f"{self.__class__.__name__}.assign_author",
+            name=f"{self.tool_mcp_path_prefix}r.assign_author",
+            title=f"{self.tool_mcp_path_prefix}.assign_author",
             description="Assign the most suitable author for a given topic based on their expertise.",
         )
         async def assign_author(topic: str, authors: list) -> str:
@@ -75,8 +75,8 @@ class AssignAuthor(A2ATool):
             return response
 
         @self.get_mcp().tool(
-            name=f"{self.__class__.__name__}.get_capabilities",
-            title=f"{self.__class__.__name__}.get_capabilities",
+            name=f"{self.tool_mcp_path_prefix}.get_capabilities",
+            title=f"{self.tool_mcp_path_prefix}.get_capabilities",
             description="Get the capabilities of the AssignAuthor tool.",
         )
         async def get_capabilities() -> dict:

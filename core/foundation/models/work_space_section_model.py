@@ -1,9 +1,9 @@
 import uuid
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from models.strict_mode import StrictModel
+from core.foundation.models.strict_mode import StrictModel
 
 
 class WorkSpaceSectionStateEnum(Enum):
@@ -28,4 +28,6 @@ class WorkSpaceSectionModel(StrictModel):
     planner_suggestions: list[str] = Field(description="Planner suggestions for the section", default=[])
 
     word_count: int = Field(description="Word count of the section", default=0)
-    status:WorkSpaceSectionStateEnum = Field(description="Status of the section", default= WorkSpaceSectionStateEnum.EMPTY if not content else WorkSpaceSectionStateEnum.DRAFT)
+    status:WorkSpaceSectionStateEnum = Field(description="Status of the section",
+                                             default= WorkSpaceSectionStateEnum.EMPTY if not content
+                                             else WorkSpaceSectionStateEnum.DRAFT)

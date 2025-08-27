@@ -1,6 +1,8 @@
 import asyncio
 import os
 
+from docutils.nodes import topic
+
 from client.client import MyClient
 from core.config_env import config_env
 
@@ -11,7 +13,7 @@ async def main(host: str = None, port: int = None):
     tools = await my_client.list_tools()
     print(tools)
 
-    print(await my_client.call_tool(tool_name="get_capabilities"))
+    print(await my_client.call_tool(tool_name="ContentStrategist.generate_content_structure", topic="Sports"))
 
     # structure = await my_client.call_tool(
     #     tool_name="generate_content_structure",

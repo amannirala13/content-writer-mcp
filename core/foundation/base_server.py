@@ -1,11 +1,8 @@
-from pickle import FALSE
-from tkinter.font import names
-
 from fastmcp import FastMCP
-from sqlalchemy.sql.functions import count
 
+from core.foundation.look_up_service_registry import LookupServiceRegistryMCPTool
 from core.utils.async_lib import continuous_process, start_background_processes, print_process_status, start_servers
-from tools.tool import Tool, A2ATool
+from core.foundation.tools import MCPTool, A2ATool
 
 
 class BaseServer:
@@ -13,7 +10,7 @@ class BaseServer:
         self._host: str = host
         self._port: int = port
         self._mcp_server: FastMCP = FastMCP(name)
-        self._tools: list[Tool | A2ATool] = []
+        self._tools: list[MCPTool | A2ATool | LookupServiceRegistryMCPTool] = []
         self._resources = []
         self._prompts = []
 
@@ -21,7 +18,8 @@ class BaseServer:
         self.register_system_tools()
 
 
-    def load_default_tools(self, tools: list[Tool | A2ATool]):
+    def load_default_tools(self, tools: list[MCPTool | A2ATool | LookupServiceRegistryMCPTool]):
+        #self._tools.append()
         self._tools.extend(tools)
 
     def register_tools(self):
@@ -50,9 +48,10 @@ class BaseServer:
         server_configs = []
         port_offset = 0
 
+        # TODO: Ensure no port conflicts. Assign ports dynamically if needed.
         for i, tool in enumerate(self._tools):
             if hasattr(tool, 'agent_card'):  # It's an A2A tool
-                server_port = 5000 + port_offset
+                server_port = 5001 + port_offset
 
                 # Create a server configuration
                 server_configs.append({
@@ -65,7 +64,7 @@ class BaseServer:
                 port_offset += 10
         return server_configs
 
-    @continuous_process
+    #@continuous_process
     def health_monitor(self):
         """Monitor server health"""
         return f"Server {self._mcp_server.name} is healthy"
@@ -73,7 +72,6 @@ class BaseServer:
     @start_background_processes()
     def run(self):
         self.setup_a2a_servers()
-        print_process_status()
         self._mcp_server.run(transport="http", host=self._host, port=self._port)
 
     def get(self) -> FastMCP:
