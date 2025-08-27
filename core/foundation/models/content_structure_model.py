@@ -1,7 +1,7 @@
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from models.strict_mode import StrictModel
+from core.foundation.models.strict_mode import StrictModel
 
 
 class SubtopicModel(StrictModel):

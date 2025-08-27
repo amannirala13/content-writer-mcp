@@ -1,12 +1,15 @@
 from typing import List, Any
 
-from fastmcp import FastMCP
 from python_a2a import skill
 
-from tools.tool import A2ATool
+from core.foundation.tools import A2ATool, MCPTool
 
 
-class ResearchPaperRetriever(A2ATool):
+class ResearchPaperRetriever(A2ATool, MCPTool):
+
+    def __init__(self, mcp_server):
+        A2ATool.__init__(self, mcp_server)
+        MCPTool.__init__(self, mcp_server)
 
     @skill(
         name="get_capabilities_skill",
@@ -17,8 +20,8 @@ class ResearchPaperRetriever(A2ATool):
         return await self._get_capabilities()
 
     def register_tool(self):
-        @self.get_mcp().tool(
-            name=f"{self.__class__.__name__}.retrieve_papers",
+        @MCPTool.get_mcp(self).tool(
+            name=f"{self.tool_mcp_path_prefix}.retrieve_papers",
             title="Research Paper Retriever",
             description="A tool to retrieve research papers from Arxiv"
         )
@@ -33,9 +36,9 @@ class ResearchPaperRetriever(A2ATool):
             # Placeholder for actual retrieval logic
             return [{"title": f"Paper {i+1} on {query}", "abstract": "Abstract of the paper"} for i in range(max_results)]
 
-        @self.get_mcp().tool(
-            name=f"{self.__class__.__name__}.get_capabilities",
-            title=f"{self.__class__.__name__}.get_capabilities",
+        @MCPTool.get_mcp(self).tool(
+            name=f"{self.tool_mcp_path_prefix}.get_capabilities",
+            title=f"{self.tool_mcp_path_prefix}.get_capabilities",
             description="Get the capabilities of the ResearchPaperRetriever tool."
         )
         async def get_capabilities() -> dict:
