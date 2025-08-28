@@ -7,6 +7,7 @@
 """
 
 import os
+from dotenv import load_dotenv
 import google.generativeai as genai
 from llm.llm_agent import LLMAgent
 
@@ -42,7 +43,7 @@ class GeminiClient(LLMAgent):
         Initialize the GeminiClient with optional API key flag, system behavior, and configuration.
         """
         super().__init__(config=config)
-
+        load_dotenv()
         api_key = os.getenv(api_key_flag if api_key_flag else "GEMINI_API_KEY")
         if not api_key:
             raise ValueError("Gemini API key not found in environment variables.")

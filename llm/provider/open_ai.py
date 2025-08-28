@@ -7,6 +7,7 @@
 """
 
 import os
+from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from llm.llm_agent import LLMAgent
 
@@ -33,11 +34,13 @@ class OpenAIClient(LLMAgent):
 
     :return: The generated text from the model.
     """
+
     def __init__(
-            self,
-            api_key_flag: str = None,
-            system_behavior: str = None,
-            config: dict = None,):
+        self,
+        api_key_flag: str = None,
+        system_behavior: str = None,
+        config: dict = None,
+    ):
         """
         Initialize the OpenAIClient with optional API key flag, system behavior, and configuration.
         :param api_key_flag:
@@ -45,9 +48,13 @@ class OpenAIClient(LLMAgent):
         :param config:
         """
         super().__init__(config=config)
-
-        self._client = AsyncOpenAI(api_key=os.getenv(api_key_flag if api_key_flag else "OPENAI_API_KEY"))
-        self._system_behavior = OpenAIClient.system_message( system_behavior ) if system_behavior else None
+        load_dotenv()
+        self._client = AsyncOpenAI(
+            api_key=os.getenv(api_key_flag if api_key_flag else "OPENAI_API_KEY")
+        )
+        self._system_behavior = (
+            OpenAIClient.system_message(system_behavior) if system_behavior else None
+        )
 
     def get_default_config(self) -> dict:
         """
@@ -75,11 +82,13 @@ class OpenAIClient(LLMAgent):
         """
         response = await self._client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            **(config if config else self.get_config())
+            **(config if config else self.get_config()),
         )
         return response.choices[0].message.content
 
-    async def generate_text_with_messages(self, messages: list, config: dict = None) -> str:
+    async def generate_text_with_messages(
+        self, messages: list, config: dict = None
+    ) -> str:
         """
         Generate text based on a list of messages.
         :param messages: A list of message dictionaries, each containing 'role' and 'content'.
@@ -87,8 +96,11 @@ class OpenAIClient(LLMAgent):
         :return: The generated text from the model.
         """
         response = await self._client.chat.completions.create(
-            messages= [self._system_behavior] + messages if self._system_behavior is not None else messages,
-            **(config if config else self.get_config()))
+            messages=[self._system_behavior] + messages
+            if self._system_behavior is not None
+            else messages,
+            **(config if config else self.get_config()),
+        )
         return response.choices[0].message.content
 
     def get_client(self) -> AsyncOpenAI:
