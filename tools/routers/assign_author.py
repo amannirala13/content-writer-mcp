@@ -39,6 +39,12 @@ class AssignAuthor(A2ATool, MCPTool):
         MCPTool.__init__(self, mcp_server)
         self._llm_client = LocalLMClient()
 
+    async def get_capabilities(self) -> dict:
+        return {
+            "mcp_capability": await MCPTool._get_capabilities(self),
+            "a2a_capability": await A2ATool._get_capabilities(self),
+        }
+
     def register_tool(self) -> None:
         """
         Register the assign_author tool with the MCP server.
@@ -80,4 +86,4 @@ class AssignAuthor(A2ATool, MCPTool):
             description="Get the capabilities of the AssignAuthor tool.",
         )
         async def get_capabilities() -> dict:
-            return await self._get_capabilities()
+            return await self.get_capabilities()

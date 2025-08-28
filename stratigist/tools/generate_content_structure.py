@@ -6,13 +6,16 @@
 """
 import asyncio
 
+from asyncinit import asyncinit
 from fastmcp import FastMCP
+from lazy_object_proxy.utils import await_
 from python_a2a import skill, agent
 
 from core.foundation.look_up_service_registry import LookupServiceRegistryMCPTool
 from core.foundation.models.content_structure_model import ContentStructureModel
 from core.foundation.models.tools_model import ToolsModel, SupportedProtocolsEnum
 from core.foundation.tools import A2ATool, LookupServiceRegistry, MCPTool
+from core.utils.run_blocking import run_blocking
 from llm.llm_agent import LLMAgent
 from llm.provider.local_lm_client import LocalLMClient
 from llm.provider.open_ai import OpenAIClient
@@ -90,7 +93,10 @@ class ContentStrategist(MCPTool, A2ATool, LookupServiceRegistry):
         description="Get the capabilities of the ContentStrategist tool.",
         tags=["tool", "capabilities", "info"],
     )
-    async def _get_capabilities(self) -> dict:
+    async def get_capabilities_skill(self) -> dict:
+        return await self.get_capabilities()
+
+    async def get_capabilities(self) -> dict:
         return {
             "mcp_capability": await MCPTool._get_capabilities(self),
             "a2a_capability": await A2ATool._get_capabilities(self),
@@ -98,7 +104,7 @@ class ContentStrategist(MCPTool, A2ATool, LookupServiceRegistry):
         }
 
     async def register_self(self):
-        capability = await self._get_capabilities()
+        capability = await self.get_capabilities()
         tool = ToolsModel(
             name="ContentStrategist",
             version="1.0.0",
@@ -115,7 +121,7 @@ class ContentStrategist(MCPTool, A2ATool, LookupServiceRegistry):
         :return: None
         """
 
-        asyncio.run(self.register_self())
+        run_blocking(self.register_self())
 
         @MCPTool.get_mcp(self).tool(
             name=f"{self.tool_mcp_path_prefix}.generate_content_structure",
@@ -134,4 +140,4 @@ class ContentStrategist(MCPTool, A2ATool, LookupServiceRegistry):
             tags={"tool", "capabilities", "info"},
         )
         async def get_capabilities() -> dict:
-            return await self._get_capabilities()
+            return await self.get_capabilities()
