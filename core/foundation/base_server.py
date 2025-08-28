@@ -34,10 +34,14 @@ class BaseServer:
             name="get_capabilities")
         async def get_capabilities() -> dict:
             capabilities = {"tools": {}, "resources": {}, "prompts": {}}
+            print("I am generating capabilities... for tools: ", self._tools)
             for tool in self._tools:
+                print("Tool: ", tool.__class__.__name__, await tool.get_capabilities())
                 capabilities["tools"][tool.__class__.__name__] = await tool.get_capabilities()
+                print(" Done with tool: ", tool.__class__.__name__)
 
             # TODO: Add resources and prompts capabilities
+            print("I generated capabilities: ", capabilities)
             return capabilities
 
     @start_servers()
