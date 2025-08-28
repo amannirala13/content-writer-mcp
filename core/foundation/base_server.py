@@ -6,7 +6,7 @@ from core.foundation.tools import MCPTool, A2ATool
 
 
 class BaseServer:
-    def __init__(self, host: str, port: int, name: str = "MCP Server"):
+    def __init__(self, host: str, port: int, name: str = "MCP Server", load_system_tools: bool = True):
         self._host: str = host
         self._port: int = port
         self._mcp_server: FastMCP = FastMCP(name)
@@ -15,7 +15,10 @@ class BaseServer:
         self._prompts = []
 
         # Register system tools - capabilities, health check, etc.
-        self.register_system_tools()
+        if load_system_tools:
+            self.register_system_tools()
+
+
 
 
     def load_default_tools(self, tools: list[MCPTool | A2ATool | LookupServiceRegistryMCPTool]):
@@ -55,7 +58,7 @@ class BaseServer:
         # TODO: Ensure no port conflicts. Assign ports dynamically if needed.
         for i, tool in enumerate(self._tools):
             if hasattr(tool, 'agent_card'):  # It's an A2A tool
-                server_port = 5001 + port_offset
+                server_port = 50010 + port_offset
 
                 # Create a server configuration
                 server_configs.append({

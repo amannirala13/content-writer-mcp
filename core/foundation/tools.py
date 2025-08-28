@@ -86,12 +86,12 @@ class LookupServiceRegistry:
     async def lookup_service(self, registry_id: str) -> ToolsModel | None:
         async with self._client() as client:
             result = await client.call_tool("service_registry.get_tool",
-                                            arguments={"registry_id": registry_id})
+                                            arguments={"registry_id":  registry_id})
             return ToolsModel.model_validate(result.structured_content)
 
     async def register_service(self, service: ToolsModel) -> None:
         async with self._client() as client:
-            client.call_tool(f"service_registry.add_tool_to_registry",
+            await client.call_tool(f"service_registry.add_tool_to_registry",
                              arguments={"tool": service.model_dump()})
 
     async def list_services(self) -> dict[str, ToolsModel] | None:

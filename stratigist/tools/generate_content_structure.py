@@ -121,8 +121,6 @@ class ContentStrategist(MCPTool, A2ATool, LookupServiceRegistry):
         :return: None
         """
 
-        run_blocking(self.register_self())
-
         @MCPTool.get_mcp(self).tool(
             name=f"{self.tool_mcp_path_prefix}.generate_content_structure",
             title=f"{self.tool_mcp_path_prefix}.generate_content_structure",
@@ -141,3 +139,5 @@ class ContentStrategist(MCPTool, A2ATool, LookupServiceRegistry):
         )
         async def get_capabilities() -> dict:
             return await self.get_capabilities()
+
+        asyncio.run(self.register_self())
