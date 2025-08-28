@@ -7,6 +7,7 @@
 """
 
 import os
+from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from llm.llm_agent import LLMAgent
 
@@ -17,8 +18,7 @@ class LocalLMClient(LLMAgent):
     This class extends the LLMAgent abstract base class and provides implementations
     for generating text based on prompts.
 
-    :param api_key_flag: Optional environment variable name for an API key.
-                         LM Studio local endpoint usually does not need one.
+    :param local_endpoint: Local LLM endpoint URL.
     :param system_behavior: Optional system behavior prompt to guide the model's responses.
     :param config: A dictionary of configuration options for the LM Studio API (e.g., model, max_tokens).
 
@@ -32,7 +32,7 @@ class LocalLMClient(LLMAgent):
 
     def __init__(
         self,
-        api_key_flag: str = None,
+        local_endpoint: str = None,
         system_behavior: str = None,
         config: dict = None,
     ):
@@ -42,9 +42,11 @@ class LocalLMClient(LLMAgent):
         super().__init__(config=config)
 
         # LM Studio local server uses an OpenAI-compatible API but does not require authentication.
+        load_dotenv()
         self._client = AsyncOpenAI(
-            base_url="http://127.0.0.1:1234/v1",
-            api_key=os.getenv(api_key_flag) if api_key_flag else "lm-studio",
+            base_url=os.getenv(
+                local_endpoint if local_endpoint else "LOCAL_LLM_ENDPOINT"
+            ),
         )
 
         self._system_behavior = (
