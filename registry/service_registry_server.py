@@ -1,16 +1,25 @@
-import os
-from typing import Any
+from __future__ import annotations
 
-from fastmcp import FastMCP
+import os
+from typing import Any, Mapping
+
+import uvicorn
+from fastmcp import FastMCP, Client
+from fastmcp.client import StreamableHttpTransport
 from pydantic import Field
 from python_a2a import A2AServer, run_server, skill, agent
+from starlette.applications import Starlette
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import PlainTextResponse
+from starlette.routing import Mount
 
 from core.builders.cmd_args_parser_builder import build_cmd_args_parser, Argument
-from core.config_env import config_env
+from core.config.config_env import config_env
 from core.foundation.models.tools_model import ToolsModel
-from core.utils.async_lib import start_background_processes, start_servers, continuous_process
+from core.utils.runtime_utils.async_lib import start_background_processes, start_servers, continuous_process
 from core.utils.encoders.transport_encoder import transportify
-from core.utils.run_blocking import run_blocking
+from core.utils.runtime_utils.run_blocking import run_blocking
 
 
 @agent(
@@ -37,7 +46,34 @@ class ServiceRegistryServer(A2AServer):
         self._mcp_port = mcp_port
         self._a2a_port = a2a_port
         self.register_mcp_tools()
+        self.app = self._build_asgi_app()
         run_blocking(self.self_register())
+
+    def _build_asgi_app(self) -> Starlette:
+        # The FastMCP ASGI app that serves /mcp and any @custom_route you defined
+        mcp_asgi = self.mcp_server.streamable_http_app()
+
+        # Interceptor that answers bare OPTIONS anywhere (preflight) with 204
+        async def with_options(scope, receive, send):
+            if scope["type"] == "http" and scope["method"] == "OPTIONS":
+                resp = PlainTextResponse("ok", status_code=204)
+                await resp(scope, receive, send)
+                return
+            await mcp_asgi(scope, receive, send)
+
+        middleware = [
+            Middleware(
+                CORSMiddleware,
+                allow_origins=["*"],  # tighten in prod
+                allow_methods=["*"],  # includes OPTIONS
+                allow_headers=["*"],
+                expose_headers=["Mcp-Session-Id"],
+                max_age=600,
+            ),
+        ]
+
+        # Mount at "/" so your custom_route paths like "/mcp/registry/..." remain identical
+        return Starlette(routes=[Mount("/", app=with_options)], middleware=middleware, lifespan=mcp_asgi.lifespan)
 
     async def self_register(self):
         self._add_tool_to_registry(
@@ -47,7 +83,7 @@ class ServiceRegistryServer(A2AServer):
                 title="Service Registry",
                 version="1.0.0",
                 description="Centralized service repository for discovering and managing tools.",
-                endpoint=f"http://{self._host}:{self._a2a_port}",
+                endpoint=f"http://{self._host}:{self._mcp_port}/mcp",
                 capabilities= await self._get_capabilities(),
                 tags=["tool", "registry", "service", "discovery", "workflow"],
                 guidelines="Use this tool to discover and manage available services and tools. This is your bible for planning workflows.",
@@ -138,7 +174,7 @@ class ServiceRegistryServer(A2AServer):
             title="Get Tool by registry_id",
             description="Retrieve a tool's details by its registry id from the service registry.",
             tags={"tool", "registry", "get", "service", "discovery"},
-            output_schema=ToolsModel.model_json_schema(),
+            output_schema=None
         )
         def get_tool(registry_id: str = Field(description="Registry ID of the tool")) -> ToolsModel | None:
             return self._get_tool(registry_id)
@@ -169,6 +205,28 @@ class ServiceRegistryServer(A2AServer):
         async def list_tools_route() -> dict[str, ToolsModel]:
            return self._list_tools()
 
+        @self.mcp_server.tool(
+            name="mcp_executor",
+            title="mcp_executor",
+            tags = {"execute", "mcp", "execute mcp tool", "workflow"},
+            description = "This tools will execute MCP tools available on different MCP server. You will pass the MCP server `url` of type `str` in the following format `http://<host>:<port>/mcp` and the `tool` name of type `str` and the `arguments` of type `dict`. This will execute the tool and return the results.",
+            meta = {
+                "example_input_schema": {
+                    "url": "http://127.0.0.1:8000/mcp",
+                    "tool": "server.my_tool",
+                    "arguments": {
+                        "param1": "value1",
+                        "param2": "value2",
+                        "param3": "value3",
+                    }
+                }
+            }
+        )
+        async def mcp_executor(url: str, tool: str, arguments: Mapping[str, Any] | None = None) -> Any:
+            async with Client(StreamableHttpTransport(url=url)) as client:
+                return transportify((await client.call_tool(tool, arguments)).structured_content)
+
+
 
     @start_servers()
     def setup_a2a_server(self) -> list[dict]:
@@ -187,7 +245,15 @@ class ServiceRegistryServer(A2AServer):
     @start_background_processes()
     def run_registry(self):
         self.setup_a2a_server()
-        self.mcp_server.run(transport="http", host=self._host, port=self._mcp_port)
+        uvicorn.run(
+            self.app,
+            host=self._host,
+            port=self._mcp_port,
+            log_level="info",
+            http="h11",  # stable HTTP/1.1 streaming
+            workers=1,  # avoid worker restarts mid stream
+            timeout_keep_alive=30000,  # give the client time between events
+        )
 
 
 if __name__ == "__main__":
