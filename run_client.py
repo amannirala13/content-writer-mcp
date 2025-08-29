@@ -1,10 +1,8 @@
 import asyncio
 import os
 
-from docutils.nodes import topic
-
 from client.client import MyClient
-from core.config_env import config_env
+from core.config.config_env import config_env
 
 
 async def main(host: str = None, port: int = None):

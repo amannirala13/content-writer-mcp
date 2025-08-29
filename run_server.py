@@ -1,6 +1,6 @@
 import os
 
-from core.config_env import config_env
+from core.config.config_env import config_env
 from server.mserver import MServer
 
 

@@ -1,0 +1,6 @@
+{
+  "name": "@synergyboat/mcp-service-registry",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "mcp-service-registry": "bin/run.js" }
+}

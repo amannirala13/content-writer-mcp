@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 from fastmcp import FastMCP
 
 from core.foundation.look_up_service_registry import LookupServiceRegistryMCPTool
-from core.utils.async_lib import continuous_process, start_background_processes, print_process_status, start_servers
-from core.foundation.tools import MCPTool, A2ATool
+from core.utils.runtime_utils.async_lib import start_background_processes, start_servers
+from core.foundation.tools import MCPTool, A2ATool, RegistryAwareMixin
+from core.utils.runtime_utils.run_blocking import run_blocking
 
 
 class BaseServer:
-    def __init__(self, host: str, port: int, name: str = "MCP Server"):
+    def __init__(self, host: str, port: int, name: str = "MCP Server", load_system_tools: bool = True):
         self._host: str = host
         self._port: int = port
         self._mcp_server: FastMCP = FastMCP(name)
@@ -15,7 +18,10 @@ class BaseServer:
         self._prompts = []
 
         # Register system tools - capabilities, health check, etc.
-        self.register_system_tools()
+        if load_system_tools:
+            self.register_system_tools()
+
+
 
 
     def load_default_tools(self, tools: list[MCPTool | A2ATool | LookupServiceRegistryMCPTool]):
@@ -24,7 +30,10 @@ class BaseServer:
 
     def register_tools(self):
         for tool in self._tools:
-            tool.register_tool()
+            if isinstance(tool, MCPTool):
+                tool.register_tool()
+            if isinstance(tool, RegistryAwareMixin):
+                print(f"Pinged {tool.__class__.__name__}... ", run_blocking(tool.ping()))
 
     def register_system_tools(self) -> None:
         @self._mcp_server.tool(
@@ -55,7 +64,7 @@ class BaseServer:
         # TODO: Ensure no port conflicts. Assign ports dynamically if needed.
         for i, tool in enumerate(self._tools):
             if hasattr(tool, 'agent_card'):  # It's an A2A tool
-                server_port = 5001 + port_offset
+                server_port = 50010 + port_offset
 
                 # Create a server configuration
                 server_configs.append({

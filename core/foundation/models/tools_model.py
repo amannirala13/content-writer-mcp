@@ -34,4 +34,4 @@ class ToolsModel(StrictModel):
     guidelines: str = Field(description="Guidelines for using the tool", default="")
     metadata: dict = Field(description="Metadata of the tool", default={})
     tags: list[str] = Field(description="Tags associated with the tool", default=[])
-
+    runtime: Any = Field(default=None, exclude=True)
