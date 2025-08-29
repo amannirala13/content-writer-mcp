@@ -8,6 +8,7 @@
 from fastmcp import FastMCP
 from python_a2a import skill, agent
 
+from core.utils.encoders.transport_encoder import transportify
 from llm.provider.local_lm_client import LocalLMClient
 from llm.provider.open_ai import OpenAIClient
 from core.foundation.tools import A2ATool, MCPTool
@@ -41,8 +42,8 @@ class AssignAuthor(A2ATool, MCPTool):
 
     async def get_capabilities(self) -> dict:
         return {
-            "mcp_capability": await MCPTool._get_capabilities(self),
-            "a2a_capability": await A2ATool._get_capabilities(self),
+            "mcp_capability": transportify(await MCPTool._get_capabilities(self)),
+            "a2a_capability": transportify(await A2ATool._get_capabilities(self)),
         }
 
     def register_tool(self) -> None:
@@ -73,12 +74,12 @@ class AssignAuthor(A2ATool, MCPTool):
 
             response = await self._llm_client.generate_text_with_messages(
                 config={
-                    "model": "gpt-4o-mini",
+                    "model": "ibm/granite-3.2-8b",
                     "max_tokens": 50,
                 },
                 messages=[OpenAIClient.user_message(topic)],
             )
-            return response
+            return transportify(response)
 
         @self.get_mcp().tool(
             name=f"{self.tool_mcp_path_prefix}.get_capabilities",
@@ -86,4 +87,4 @@ class AssignAuthor(A2ATool, MCPTool):
             description="Get the capabilities of the AssignAuthor tool.",
         )
         async def get_capabilities() -> dict:
-            return await self.get_capabilities()
+            return transportify(await self.get_capabilities())
