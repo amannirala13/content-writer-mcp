@@ -71,7 +71,7 @@ class LocalLMClient(LLMAgent):
         """
         response = await self._client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            **(config if config else self.get_config()),
+            **(config or self.get_config()),
         )
         return response.choices[0].message.content
 
