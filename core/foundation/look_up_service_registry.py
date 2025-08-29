@@ -1,17 +1,21 @@
+from __future__ import annotations
+
 import asyncio
+from typing import Any, Coroutine
 
 from mcp.server import FastMCP
 from python_a2a import agent, skill
 
 from core.foundation.models.tools_model import ToolsModel
-from core.foundation.tools import A2ATool, LookupServiceRegistry, MCPTool
+from core.foundation.tools import A2ATool, LookupServiceRegistry, MCPTool, RegistryAwareMixin
+
 
 @agent(
     name="LookupServiceRegistry Tool",
     version="1.0.0",
     description="A tool to look up and interact with a service registry for discovering available tools, resources and prompts. This tool allows clients and agents to query the registry, retrieve tool details, and register new services.",
     tags=["tool", "service", "registry", "lookup", "discovery"],)
-class LookupServiceRegistryMCPTool(A2ATool, MCPTool, LookupServiceRegistry):
+class LookupServiceRegistryMCPTool(A2ATool, MCPTool, RegistryAwareMixin):
     def __init__(self, mcp_server: FastMCP , registry_url: str):
         MCPTool.__init__(self, mcp_server)
         A2ATool.__init__(self, mcp_server=mcp_server)
@@ -29,7 +33,7 @@ class LookupServiceRegistryMCPTool(A2ATool, MCPTool, LookupServiceRegistry):
         description="List all tools currently registered in the service registry.",
         tags={"tool", "registry", "list", "service", "discovery"}
     )
-    async def list_services_skill(self) -> list[ToolsModel] | None:
+    async def list_services_skill(self) -> dict[str, ToolsModel]:
         return await self.list_services()
 
     @skill(

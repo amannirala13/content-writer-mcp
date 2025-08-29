@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from fastmcp import FastMCP
 
 from core.foundation.look_up_service_registry import LookupServiceRegistryMCPTool
-from core.utils.async_lib import continuous_process, start_background_processes, print_process_status, start_servers
-from core.foundation.tools import MCPTool, A2ATool
+from core.utils.runtime_utils.async_lib import start_background_processes, start_servers
+from core.foundation.tools import MCPTool, A2ATool, RegistryAwareMixin
+from core.utils.runtime_utils.run_blocking import run_blocking
 
 
 class BaseServer:
@@ -27,7 +30,10 @@ class BaseServer:
 
     def register_tools(self):
         for tool in self._tools:
-            tool.register_tool()
+            if isinstance(tool, MCPTool):
+                tool.register_tool()
+            if isinstance(tool, RegistryAwareMixin):
+                print(f"Pinged {tool.__class__.__name__}... ", run_blocking(tool.ping()))
 
     def register_system_tools(self) -> None:
         @self._mcp_server.tool(
