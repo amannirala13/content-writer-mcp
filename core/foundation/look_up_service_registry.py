@@ -36,13 +36,6 @@ class LookupServiceRegistryMCPTool(A2ATool, MCPTool, RegistryAwareMixin):
     async def list_services_skill(self) -> dict[str, ToolsModel]:
         return await self.list_services()
 
-    @skill(
-        name="register_service",
-        description="Add a new tool/resource/prompt to the service registry.",
-        tags={"tool", "registry", "add", "service", "discovery"},
-    )
-    async def register_service_skill(self,service: ToolsModel) -> None:
-        await self.register_service(service)
 
     @skill(
         name="get_capabilities",
@@ -80,15 +73,6 @@ class LookupServiceRegistryMCPTool(A2ATool, MCPTool, RegistryAwareMixin):
             async def list_services() -> dict[str, ToolsModel] | None:
                 return await self.list_services()
 
-            @MCPTool.get_mcp(self).tool(
-                name=f"{self.tool_mcp_path_prefix}.register_service",
-                title="Add Tool/Resource/Prompt to Registry",
-                description="Add a new tool to the service registry.",
-                tags={"tool", "registry", "add", "service", "discovery"},
-                output_schema=None,
-            )
-            async def register_service(service: ToolsModel) -> None:
-                await self.register_service(service)
 
             @MCPTool.get_mcp(self).tool(
                 name=f"{self.tool_mcp_path_prefix}.get_capabilities",
@@ -98,4 +82,3 @@ class LookupServiceRegistryMCPTool(A2ATool, MCPTool, RegistryAwareMixin):
             )
             async def get_capabilities() -> dict:
                 return await self._get_capabilities()
-

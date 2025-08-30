@@ -123,13 +123,14 @@ class RegistryAwareMixin(LookupServiceRegistry):
         self._reg_lock = asyncio.Lock()
         self._reg_task: Optional[asyncio.Task] = None
 
+        # Registration is now disabled. An external process must register tools.
         # try to start registration on construction if a loop exists
-        try:
-            loop = asyncio.get_running_loop()
-            self._reg_task = loop.create_task(self._register_with_retries())
-        except RuntimeError:
-            # no loop yet. first caller will trigger ensure_registered
-            pass
+        # try:
+        #     loop = asyncio.get_running_loop()
+        #     self._reg_task = loop.create_task(self._register_with_retries())
+        # except RuntimeError:
+        #     # no loop yet. first caller will trigger ensure_registered
+        #     pass
 
     async def ensure_registered(self) -> None:
         if self._reg_ok:
